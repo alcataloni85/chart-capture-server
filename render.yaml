@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: ventry-chart-server
+    env: node
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: PORT
+        value: 3000
+      - key: SUPABASE_URL
+        value: https://vpztgavahpgrpnnafmnd.supabase.co
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false   # Set manually in Render dashboard (secret)
+    healthCheckPath: /health
+    autoDeploy: true
