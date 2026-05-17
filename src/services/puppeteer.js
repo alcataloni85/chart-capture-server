@@ -1,63 +1,45 @@
-const puppeteer = require('puppeteer-core');
-const chromium = require('@sparticuz/chromium');
-const https = require('https');
-const path = require('path');
-const fs = require('fs');
-
-async function fetchOHLC({ symbol, market, timeframe }) {
-  const tfMap = { '1h':'60', '2h':'120', '4h':'240', '1d':'D', '1w':'W', '15m':'15', '30m':'30' };
-  const interval = tfMap[timeframe] || '240';
-  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=${interval === 'D' ? '1d' : interval === 'W' ? '1wk' : interval + 'm'}&range=6mo`;
-
-  return new Promise((resolve, reject) => {
-    https.get(url, { headers: { 'User-Agent': 'Mozilla/5.0' } }, (res) => {
-      let data = '';
-      res.on('data', chunk => data += chunk);
-      res.on('end', () => {
-        try {
-          const json = JSON.parse(data);
-          const result = json.chart.result[0];
-          const times = result.timestamp;
-          const ohlc = result.indicators.quote[0];
-          const candles = times.map((t, i) => ({
-            time: t,
-            open: ohlc.open[i],
-            high: ohlc.high[i],
-            low: ohlc.low[i],
-            close: ohlc.close[i],
-          })).filter(c => c.open && c.high && c.low && c.close);
-          resolve(candles);
-        } catch(e) { reject(e); }
-      });
-      res.on('error', reject);
-    }).on('error', reject);
-  });
-}
+const puppeteer = require('puppeteer');
 
 async function captureChart({ symbol, market, timeframe }) {
-  const candles = await fetchOHLC({ symbol, market, timeframe });
+  const tfMap = {
+    '1m':'1','3m':'3','5m':'5','15m':'15','30m':'30',
+    '1h':'60','2h':'120','4h':'240','1d':'D','1w':'W'
+  };
+  const interval = tfMap[timeframe] || '240';
+  const tvSymbol = `${market}:${symbol}`;
 
   const browser = await puppeteer.launch({
-    args: chromium.args,
-    defaultViewport: { width: 1000, height: 560 },
-    executablePath: await chromium.executablePath(),
-    headless: chromium.headless,
+    headless: 'new',
+    args: ['--no-sandbox','--disable-setuid-sandbox','--disable-dev-shm-usage','--disable-gpu']
   });
 
   const page = await browser.newPage();
+  await page.setViewport({ width: 1000, height: 560 });
 
-  // Intercept the data URL
-  await page.route('**/chart-data.json', route => {
-    route.fulfill({ contentType: 'application/json', body: JSON.stringify(candles) });
-  });
+  await page.setContent(`<!DOCTYPE html>
+<html><head><style>
+* { margin:0; padding:0; }
+body { background:#131722; width:1000px; height:560px; overflow:hidden; }
+</style></head>
+<body>
+<div class="tradingview-widget-container" style="width:1000px;height:560px;">
+<div id="tv"></div>
+<script src="https://s3.tradingview.com/tv.js"></script>
+<script>
+new TradingView.widget({
+  width:1000, height:560,
+  symbol:"${tvSymbol}",
+  interval:"${interval}",
+  theme:"dark", style:"1", locale:"en",
+  hide_top_toolbar:true, hide_side_toolbar:true,
+  allow_symbol_change:false, save_image:false,
+  container_id:"tv"
+});
+</script>
+</div>
+</body></html>`, { waitUntil: 'networkidle2', timeout: 30000 });
 
-  const html = fs.readFileSync(path.join(__dirname, '../chart-template.html'), 'utf8')
-    .replace('window.DATA_URL', `'http://localhost/chart-data.json'`);
-
-  await page.setContent(html, { waitUntil: 'networkidle0' });
-  await page.waitForFunction('window.CHART_READY === true', { timeout: 10000 });
-  await new Promise(r => setTimeout(r, 1000));
-
+  await new Promise(r => setTimeout(r, 8000));
   const screenshot = await page.screenshot({ type: 'png' });
   await browser.close();
   return screenshot;
