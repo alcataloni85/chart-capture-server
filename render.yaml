@@ -2,8 +2,10 @@ services:
   - type: web
     name: ventry-chart-server
     env: node
+    region: oregon
+    plan: free
     buildCommand: npm install
-    startCommand: npm start
+    startCommand: node src/index.js
     envVars:
       - key: NODE_VERSION
         value: 18.19.0
@@ -12,6 +14,4 @@ services:
       - key: SUPABASE_URL
         value: https://vpztgavahpgrpnnafmnd.supabase.co
       - key: SUPABASE_SERVICE_ROLE_KEY
-        sync: false   # Set manually in Render dashboard (secret)
-    healthCheckPath: /health
-    autoDeploy: true
+        sync: false
