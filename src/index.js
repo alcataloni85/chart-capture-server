@@ -52,7 +52,7 @@ async function handleCapture(req, res) {
   try {
     console.log(`[${req.method} /capture] ${market}:${symbol} @ ${timeframe}`);
     const buf      = await captureChart({ symbol, market, timeframe });
-    const fileName = `${market}_${symbol}_${timeframe}_${Date.now()}.jpg`;
+    const fileName = `${market}_${symbol}_${timeframe}_${Date.now()}.png`;
     const url      = await uploadToSupabase(buf, fileName);
     res.json({ url, fileName });
   } catch (err) {
