@@ -8,7 +8,7 @@ async function captureChart({ symbol, market, timeframe }) {
   };
   const interval = tfMap[timeframe] || '240';
   const widgetUrl = `https://ventry-chart-server.onrender.com/chart?symbol=${encodeURIComponent(tvSymbol)}&interval=${interval}`;
-  const thumbUrl = `https://image.thum.io/get/width/1200/crop/600/noanimate/wait/5/${widgetUrl}`;
+  const thumbUrl = `https://image.thum.io/get/width/1200/crop/600/noanimate/wait/8/${widgetUrl}`;
 
   return new Promise((resolve, reject) => {
     https.get(thumbUrl, (res) => {
