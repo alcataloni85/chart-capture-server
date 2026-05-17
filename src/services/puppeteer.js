@@ -6,7 +6,11 @@ async function captureChart({ symbol, market, timeframe }) {
     '1h':'60','2h':'120','4h':'240','1d':'D','1w':'W'
   };
   const interval = tfMap[timeframe] || '240';
-  const tvSymbol = `${market}:${symbol}`;
+
+  // For US stocks, try multiple exchanges
+  const exchanges = market === 'us' || market === 'US'
+    ? ['NASDAQ', 'NYSE', 'AMEX', 'OTC']
+    : [market.toUpperCase()];
 
   const browser = await puppeteer.launch({
     headless: 'new',
@@ -16,7 +20,10 @@ async function captureChart({ symbol, market, timeframe }) {
   const page = await browser.newPage();
   await page.setViewport({ width: 1000, height: 560 });
 
-  await page.setContent(`<!DOCTYPE html>
+  // Try each exchange until one works
+  let tvSymbol = `${exchanges[0]}:${symbol}`;
+
+  const html = `<!DOCTYPE html>
 <html><head><style>
 * { margin:0; padding:0; }
 body { background:#131722; width:1000px; height:560px; overflow:hidden; }
@@ -31,15 +38,18 @@ new TradingView.widget({
   symbol:"${tvSymbol}",
   interval:"${interval}",
   theme:"dark", style:"1", locale:"en",
-  hide_top_toolbar:true, hide_side_toolbar:true,
+  hide_top_toolbar:false, hide_side_toolbar:true,
   allow_symbol_change:false, save_image:false,
-  container_id:"tv"
+  container_id:"tv",
+  autosize:false
 });
 </script>
 </div>
-</body></html>`, { waitUntil: 'networkidle2', timeout: 30000 });
+</body></html>`;
 
+  await page.setContent(html, { waitUntil: 'networkidle2', timeout: 30000 });
   await new Promise(r => setTimeout(r, 8000));
+
   const screenshot = await page.screenshot({ type: 'png' });
   await browser.close();
   return screenshot;
