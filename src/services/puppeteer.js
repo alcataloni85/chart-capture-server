@@ -21,7 +21,7 @@ async function captureChart({ symbol, market, timeframe }) {
   await page.setViewport({ width: 1000, height: 560 });
 
   // Try each exchange until one works
-  let tvSymbol = `${exchanges[0]}:${symbol}`;
+  let tvSymbol = symbol.toUpperCase();
 
   const html = `<!DOCTYPE html>
 <html><head><style>
