@@ -1,24 +1,26 @@
-const puppeteer = require('puppeteer-core');
-const chromium = require('@sparticuz/chromium');
+const https = require('https');
+const sharp = require('sharp');
 
 async function captureChart({ symbol, market, timeframe }) {
-  const browser = await puppeteer.launch({
-    args: chromium.args,
-    defaultViewport: chromium.defaultViewport,
-    executablePath: await chromium.executablePath(),
-    headless: chromium.headless,
+  const tvSymbol = `${market}:${symbol}`;
+  const tvUrl = `https://www.tradingview.com/chart/?symbol=${tvSymbol}`;
+  const thumbUrl = `https://image.thum.io/get/width/1200/crop/600/${tvUrl}`;
+
+  const rawBuffer = await new Promise((resolve, reject) => {
+    https.get(thumbUrl, (res) => {
+      const chunks = [];
+      res.on('data', chunk => chunks.push(chunk));
+      res.on('end', () => resolve(Buffer.concat(chunks)));
+      res.on('error', reject);
+    }).on('error', reject);
   });
 
-  const page = await browser.newPage();
-  await page.setViewport({ width: 1200, height: 600 });
+  const compressed = await sharp(rawBuffer)
+    .resize(900, 450)
+    .jpeg({ quality: 75 })
+    .toBuffer();
 
-  const url = `https://www.tradingview.com/widgetbar-chart-popup/?symbol=${market}:${symbol}&interval=${timeframe}`;
-  await page.goto(url, { waitUntil: 'networkidle2', timeout: 30000 });
-  await new Promise(r => setTimeout(r, 5000));
-
-  const buffer = await page.screenshot({ type: 'png' });
-  await browser.close();
-  return buffer;
+  return compressed;
 }
 
 module.exports = { captureChart };
