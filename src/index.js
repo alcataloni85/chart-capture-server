@@ -1,5 +1,7 @@
 require('dotenv').config();
 const express = require('express');
+const fs = require('fs');
+const path = require('path');
 const captureRoute = require('./routes/capture');
 
 const app = express();
@@ -63,6 +65,15 @@ async function handleCapture(req, res) {
 
 app.get('/capture',  handleCapture);
 app.post('/capture', handleCapture);
+
+app.get('/chart', (req, res) => {
+  const { symbol, interval } = req.query;
+  let html = fs.readFileSync(path.join(__dirname, 'chart.html'), 'utf8');
+  html = html.replace('SYMBOL_PLACEHOLDER', symbol || 'NASDAQ:AAPL');
+  html = html.replace('INTERVAL_PLACEHOLDER', interval || '240');
+  res.setHeader('Content-Type', 'text/html');
+  res.send(html);
+});
 
 app.use('/', captureRoute);
 
