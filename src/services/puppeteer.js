@@ -7,10 +7,22 @@ async function captureChart({ symbol, market, timeframe }) {
   };
   const interval = tfMap[timeframe] || '240';
 
-  // For US stocks, try multiple exchanges
-  const exchanges = market === 'us' || market === 'US'
-    ? ['NASDAQ', 'NYSE', 'AMEX', 'OTC']
-    : [market.toUpperCase()];
+  const symbolMap = {
+    'XAUUSD': 'TVC:GOLD',
+    'XAGUSD': 'TVC:SILVER',
+    'USOIL':  'TVC:USOIL',
+    'UKOIL':  'TVC:UKOIL',
+    'EURUSD': 'FX:EURUSD',
+    'GBPUSD': 'FX:GBPUSD',
+    'USDJPY': 'FX:USDJPY',
+    'AUDUSD': 'FX:AUDUSD',
+    'USDCAD': 'FX:USDCAD',
+    'USDCHF': 'FX:USDCHF',
+    'NZDUSD': 'FX:NZDUSD',
+    'EURJPY': 'FX:EURJPY',
+    'GBPJPY': 'FX:GBPJPY',
+    'EURGBP': 'FX:EURGBP',
+  };
 
   const browser = await puppeteer.launch({
     headless: 'new',
@@ -20,8 +32,7 @@ async function captureChart({ symbol, market, timeframe }) {
   const page = await browser.newPage();
   await page.setViewport({ width: 1000, height: 560 });
 
-  // Try each exchange until one works
-  let tvSymbol = symbol.toUpperCase();
+  const tvSymbol = symbolMap[symbol.toUpperCase()] || symbol.toUpperCase();
 
   const html = `<!DOCTYPE html>
 <html><head><style>
