@@ -1,4 +1,5 @@
 const { createClient } = require('@supabase/supabase-js');
+const ws = require('ws');
 
 const BUCKET = 'charts';
 
@@ -10,7 +11,7 @@ function getClient() {
     throw new Error('SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set in .env');
   }
 
-  return createClient(url, key);
+  return createClient(url, key, { realtime: { transport: ws } });
 }
 
 async function uploadToSupabase(buffer, fileName) {
