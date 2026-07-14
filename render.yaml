@@ -1,11 +1,9 @@
 services:
   - type: web
     name: ventry-chart-server
-    env: node
+    env: docker
     region: oregon
     plan: free
-    buildCommand: npm install
-    startCommand: node src/index.js
     envVars:
       - key: NODE_VERSION
         value: 18.19.0
