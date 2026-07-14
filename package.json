@@ -4,7 +4,7 @@
   "description": "TradingView chart capture server using Puppeteer + Supabase",
   "main": "src/index.js",
   "scripts": {
-    "start": "node src/index.js",
+    "start": "npx puppeteer browsers install chrome && node src/index.js",
     "dev": "nodemon src/index.js"
   },
   "dependencies": {
