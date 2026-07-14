@@ -1,4 +1,4 @@
-const puppeteer = require('puppeteer');
+const puppeteer = require('puppeteer-core');
 
 async function captureChart({ symbol, market, timeframe }) {
   const tfMap = {
@@ -24,8 +24,14 @@ async function captureChart({ symbol, market, timeframe }) {
     'EURGBP': 'FX:EURGBP',
   };
 
+  const executablePath =
+    process.env.PUPPETEER_EXECUTABLE_PATH ||
+    '/usr/bin/google-chrome' ||
+    '/usr/bin/chromium-browser' ||
+    '/usr/bin/chromium';
+
   const browser = await puppeteer.launch({
-    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium' || '/usr/bin/chromium-browser',
+    executablePath,
     headless: true,
     args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
   });
